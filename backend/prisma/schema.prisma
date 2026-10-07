@@ -1,0 +1,198 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── USUARIOS ─────────────────────────────────────────────────────────────────
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  nombre    String
+  rol       String   @default("ADMIN") // ADMIN
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── CATÁLOGO ─────────────────────────────────────────────────────────────────
+model Categoria {
+  id        String     @id @default(cuid())
+  nombre    String     @unique
+  createdAt DateTime   @default(now())
+  productos Producto[]
+}
+
+model Producto {
+  id             String  @id @default(cuid())
+  nombre         String
+  codigoInterno  String? @unique
+  descripcion    String?
+  categoriaId    String?
+  categoria      Categoria? @relation(fields: [categoriaId], references: [id])
+  precioBase     Float   @default(0)
+  pesoKg         Float   @default(0)
+  cajasPorPallet Int     @default(1)
+  esPallet       Boolean @default(false)
+  activo         Boolean @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  precios     PrecioProducto[]
+  itemsPedido ItemPedido[]
+  stock       Stock?
+}
+
+model ListaPrecio {
+  id          String   @id @default(cuid())
+  nombre      String   @unique
+  descripcion String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  precios  PrecioProducto[]
+  clientes Cliente[]
+  pedidos  Pedido[]
+}
+
+model PrecioProducto {
+  listaPrecioId String
+  listaPrecio   ListaPrecio @relation(fields: [listaPrecioId], references: [id], onDelete: Cascade)
+  productoId    String
+  producto      Producto    @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  precio        Float
+
+  @@id([listaPrecioId, productoId])
+}
+
+// ─── CLIENTES ─────────────────────────────────────────────────────────────────
+// plazoCredito: CONTADO | DIAS_21 | DIAS_30 | MAS_30
+model Cliente {
+  id            String   @id @default(cuid())
+  razonSocial   String
+  cuit          String?  @unique
+  email         String?
+  telefono      String?
+  whatsapp      String?
+  direccion     String?
+  localidad     String?
+  provincia     String?
+  condicionIva  String   @default("RESPONSABLE_INSCRIPTO")
+  plazoCredito  String   @default("CONTADO")
+  listaPrecioId String?
+  listaPrecio   ListaPrecio? @relation(fields: [listaPrecioId], references: [id])
+  activo        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  pedidos Pedido[]
+}
+
+// ─── PEDIDOS ──────────────────────────────────────────────────────────────────
+// estado: BORRADOR | CONFIRMADO | EN_PREPARACION | DESPACHADO | ENTREGADO | FACTURADO | CANCELADO
+model Pedido {
+  id               String    @id @default(cuid())
+  fecha            DateTime  @default(now())
+  estado           String    @default("BORRADOR")
+  subtotal         Float     @default(0)
+  descuento        Float     @default(0)
+  iva              Float     @default(0)
+  total            Float     @default(0)
+  totalPallets     Float     @default(0)
+  notas            String?
+  origenWhatsapp   Boolean   @default(false)
+  nombreContacto   String?
+  fechaFacturado   DateTime?
+  transportista    String?
+  transporteCosto  Float?
+  transporteKm     Float?
+  chofer           String?
+  pesoTeorico      Float?
+  pesoReal         Float?
+  nroFactura       String?
+  pagado           Boolean   @default(false)
+  fechaPago        DateTime?
+  clienteId        String
+  cliente          Cliente   @relation(fields: [clienteId], references: [id])
+  listaPrecioId    String?
+  listaPrecio      ListaPrecio? @relation(fields: [listaPrecioId], references: [id])
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  items ItemPedido[]
+}
+
+model ItemPedido {
+  id             String   @id @default(cuid())
+  pedidoId       String
+  pedido         Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  productoId     String
+  producto       Producto @relation(fields: [productoId], references: [id])
+  cantidad       Int
+  unidad         String   @default("CAJA") // CAJA | PALLET
+  precioUnitario Float
+  subtotal       Float
+  createdAt      DateTime @default(now())
+}
+
+// ─── STOCK ────────────────────────────────────────────────────────────────────
+model Stock {
+  id          String   @id @default(cuid())
+  productoId  String   @unique
+  producto    Producto @relation(fields: [productoId], references: [id])
+  stockActual Float    @default(0)
+  updatedAt   DateTime @updatedAt
+
+  movimientos StockMovimiento[]
+}
+
+// tipo: AJUSTE_MANUAL | ENTRADA | FACTURACION
+// cantidad positiva = ingreso, negativa = egreso
+model StockMovimiento {
+  id          String   @id @default(cuid())
+  stockId     String
+  stock       Stock    @relation(fields: [stockId], references: [id], onDelete: Cascade)
+  tipo        String   // AJUSTE_MANUAL | ENTRADA | FACTURACION
+  cantidad    Float
+  descripcion String?
+  pedidoId    String?
+  createdAt   DateTime @default(now())
+}
+
+// ─── COMEX ────────────────────────────────────────────────────────────────────
+// tipo: IMPORTACION | EXPORTACION
+// estado: EN_PROCESO | COMPLETADA | CANCELADA
+model ComexOperacion {
+  id          String   @id @default(cuid())
+  fecha       DateTime @default(now())
+  tipo        String   @default("IMPORTACION")
+  descripcion String
+  proveedor   String?
+  montoUSD    Float    @default(0)
+  cotizacion  Float    @default(0)
+  montoUYU    Float    @default(0)
+  estado           String   @default("EN_PROCESO")
+  notas            String?
+  transportista    String?
+  transporteCosto  Float?
+  transporteKm     Float?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  documentos ComexDocumento[]
+}
+
+// tipo: BL | PL | FACTURA_COMERCIAL | CRT | OTRO
+model ComexDocumento {
+  id          String         @id @default(cuid())
+  operacionId String
+  operacion   ComexOperacion @relation(fields: [operacionId], references: [id], onDelete: Cascade)
+  tipo        String         // BL | PL | FACTURA_COMERCIAL | CRT | OTRO
+  nombre      String
+  notas       String?
+  createdAt   DateTime       @default(now())
+}
