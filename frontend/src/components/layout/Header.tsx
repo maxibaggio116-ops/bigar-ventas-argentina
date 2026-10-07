@@ -1,13 +1,16 @@
-import { Menu, LogOut, User } from 'lucide-react';
+import { useState } from 'react';
+import { Menu, LogOut, User, KeyRound } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { CambiarPasswordModal } from './CambiarPasswordModal';
 
 interface HeaderProps { onMenuClick: () => void; }
 
 export function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [passwordOpen, setPasswordOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -35,6 +38,15 @@ export function Header({ onMenuClick }: HeaderProps) {
         </div>
 
         <button
+          onClick={() => setPasswordOpen(true)}
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary transition-colors p-2 rounded-lg hover:bg-gray-50"
+          title="Cambiar contraseña"
+        >
+          <KeyRound className="w-4 h-4" />
+          <span className="hidden sm:inline">Contraseña</span>
+        </button>
+
+        <button
           onClick={handleLogout}
           className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50"
           title="Cerrar sesión"
@@ -43,6 +55,8 @@ export function Header({ onMenuClick }: HeaderProps) {
           <span className="hidden sm:inline">Salir</span>
         </button>
       </div>
+
+      <CambiarPasswordModal open={passwordOpen} onClose={() => setPasswordOpen(false)} />
     </header>
   );
 }

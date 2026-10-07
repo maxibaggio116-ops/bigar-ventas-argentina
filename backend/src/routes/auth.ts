@@ -51,6 +51,8 @@ authRouter.get('/me', authenticate, asyncHandler(async (req: AuthRequest, res) =
 
 authRouter.put('/change-password', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || typeof newPassword !== 'string' || newPassword.length < 6)
+    return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres' });
   const user = await prisma.user.findUnique({ where: { id: req.user!.id } });
   if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
