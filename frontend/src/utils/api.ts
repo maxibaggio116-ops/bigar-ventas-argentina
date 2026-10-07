@@ -11,7 +11,8 @@ instance.interceptors.request.use(config => {
 instance.interceptors.response.use(
   r => r,
   err => {
-    if (err.response?.status === 401) {
+    // En el login, un 401 es "credenciales inválidas": se muestra el error sin redirigir
+    if (err.response?.status === 401 && !err.config?.url?.includes('/auth/login')) {
       localStorage.removeItem('jdu_token');
       window.location.href = '/login';
     }

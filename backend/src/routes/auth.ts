@@ -9,7 +9,8 @@ import { getJwtSecret } from '../config';
 export const authRouter = Router();
 
 authRouter.post('/login', asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const email = String(req.body.email ?? '').trim().toLowerCase();
+  const { password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email y contraseña requeridos' });
 
   const user = await prisma.user.findUnique({

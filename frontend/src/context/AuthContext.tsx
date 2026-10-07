@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [logout]);
 
   const login = async (email: string, password: string) => {
-    const result = await api.post<{ token: string; user: AuthUser }>('/auth/login', { email, password });
+    const result = await api.post<{ token: string; user: AuthUser }>('/auth/login', { email: email.trim().toLowerCase(), password });
     localStorage.setItem('jdu_token', result.token);
     setToken(result.token);
     setUser(result.user);
