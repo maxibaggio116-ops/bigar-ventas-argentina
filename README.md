@@ -50,7 +50,7 @@ Frontend en http://localhost:5173 (proxy `/api` → http://localhost:3001).
 3. Agregá el plugin **PostgreSQL**.
 4. En el servicio de la app, variables:
    - `DATABASE_URL` = `${{ Postgres.DATABASE_URL }}`
-   - `JWT_SECRET` = una cadena larga y aleatoria (**obligatoria**, sin ella no funciona el login)
+   - `JWT_SECRET` (opcional): si falta, se deriva de `DATABASE_URL`
    - `NODE_ENV` = `production`
    - Opcional: `VENDEDOR_PASSWORD`, `EMPRESA_DOMINIO`
 5. El `startCommand` corre `prisma db push` y después levanta el servidor, que crea usuarios y catálogo inicial.

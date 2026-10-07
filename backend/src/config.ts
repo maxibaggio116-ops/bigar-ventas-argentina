@@ -27,3 +27,10 @@ export const PRODUCTOS_INICIALES: { nombre: string; categoria: string; esPallet?
   { nombre: 'Agua saborizada Lima-Limón 500ml', categoria: 'Bebidas' },
   { nombre: 'Pallets Arlog', categoria: 'Logística', esPallet: true },
 ];
+
+// Si no hay JWT_SECRET, se deriva uno estable de DATABASE_URL (que incluye la contraseña de la base)
+import crypto from 'crypto';
+export function getJwtSecret(): string {
+  return process.env.JWT_SECRET
+    || crypto.createHash('sha256').update(`bigar-jwt:${process.env.DATABASE_URL ?? ''}`).digest('hex');
+}

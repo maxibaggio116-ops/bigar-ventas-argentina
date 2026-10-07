@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../utils/prisma';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../utils/asyncHandler';
+import { getJwtSecret } from '../config';
 
 export const authRouter = Router();
 
@@ -22,7 +23,7 @@ authRouter.post('/login', asyncHandler(async (req, res) => {
 
   const token = jwt.sign(
     { id: user.id, email: user.email, rol: user.rol },
-    process.env.JWT_SECRET!,
+    getJwtSecret(),
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as any
   );
 
